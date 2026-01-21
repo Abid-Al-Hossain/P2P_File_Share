@@ -1,0 +1,13 @@
+# Render.com deployment configuration for signaling server
+# https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: p2p-signaling-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production

@@ -31,8 +31,13 @@ export class P2PClient {
   // Callbacks
   private listeners: Map<string, Function[]> = new Map();
 
-  constructor(serverUrl: string = "http://localhost:3000") {
-    this.socket = io(serverUrl);
+  constructor(serverUrl?: string) {
+    // Use environment variable in production, fallback to localhost for dev
+    const url =
+      serverUrl ||
+      import.meta.env.VITE_SIGNALING_URL ||
+      "http://localhost:3000";
+    this.socket = io(url);
     this.setupSocketListeners();
   }
 

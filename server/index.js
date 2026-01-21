@@ -16,7 +16,7 @@ const io = new Server(server, {
   },
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Store room metadata if needed (e.g. sender presence)
 // Map<roomId, { senderId: string, receiverId: string }>
