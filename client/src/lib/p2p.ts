@@ -184,24 +184,25 @@ export class P2PClient {
     });
 
     // Debug: Log ICE connection state changes via the underlying RTCPeerConnection
+    // IMPORTANT: Use addEventListener to NOT override simple-peer's handlers!
     const pc = (this.peer as any)._pc as RTCPeerConnection | undefined;
     if (pc) {
-      pc.oniceconnectionstatechange = () => {
+      pc.addEventListener("iceconnectionstatechange", () => {
         console.log(`[P2P] ICE connection state: ${pc.iceConnectionState}`);
-      };
-      pc.onicegatheringstatechange = () => {
+      });
+      pc.addEventListener("icegatheringstatechange", () => {
         console.log(`[P2P] ICE gathering state: ${pc.iceGatheringState}`);
-      };
-      pc.onconnectionstatechange = () => {
+      });
+      pc.addEventListener("connectionstatechange", () => {
         console.log(`[P2P] Connection state: ${pc.connectionState}`);
-      };
-      pc.onicecandidate = (event) => {
+      });
+      pc.addEventListener("icecandidate", (event) => {
         if (event.candidate) {
           console.log(
             `[P2P] ICE candidate: ${event.candidate.type} - ${event.candidate.address || "relay"}`,
           );
         }
-      };
+      });
     }
   }
 
