@@ -23,6 +23,12 @@ const io = new Server(server, {
     origin: "*", // Allow all origins for P2P simplicity
     methods: ["GET", "POST"],
   },
+  // Connection stability settings for free hosting
+  allowEIO3: true, // Backward compatibility for older clients
+  pingTimeout: 60000, // 60 seconds timeout
+  pingInterval: 25000, // 25 seconds ping interval
+  transports: ["websocket", "polling"], // Prefer WebSocket
+  allowUpgrades: true,
 });
 
 const PORT = process.env.PORT || 3000;

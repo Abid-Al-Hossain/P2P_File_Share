@@ -37,7 +37,14 @@ export class P2PClient {
       serverUrl ||
       import.meta.env.VITE_SIGNALING_URL ||
       "http://localhost:3000";
-    this.socket = io(url);
+
+    this.socket = io(url, {
+      transports: ["websocket", "polling"], // Prefer WebSocket, fallback to polling
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000,
+    });
     this.setupSocketListeners();
   }
 
