@@ -77,7 +77,9 @@ io.on("connection", (socket) => {
   socket.on("signal", ({ roomId, data }) => {
     // Relay signal to the *other* person in the room
     socket.to(roomId).emit("signal", data);
-    // console.log(`Signal relay in room ${roomId} from ${socket.id}`);
+    console.log(
+      `[Signal] Relay in room ${roomId}: ${data.type || "candidate"} from ${socket.id}`,
+    );
   });
 
   socket.on("disconnect", () => {

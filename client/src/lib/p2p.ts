@@ -50,45 +50,59 @@ export class P2PClient {
 
   private setupSocketListeners() {
     this.socket.on("connect", () => {
-      console.log("Connected to signaling server");
+      console.log("[Socket] Connected to signaling server");
+    });
+
+    this.socket.on("disconnect", (reason) => {
+      console.log(`[Socket] Disconnected: ${reason}`);
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("[Socket] Connection error:", error);
     });
 
     this.socket.on("room-created", (roomId: string) => {
+      console.log(`[Socket] Room created: ${roomId}`);
       this.roomId = roomId;
       this.isInitiator = true;
       this.emit("connected", { roomId, role: "sender" });
     });
 
     this.socket.on("room-joined", (roomId: string) => {
+      console.log(`[Socket] Joined room: ${roomId}`);
       this.roomId = roomId;
       this.isInitiator = false;
       this.emit("connected", { roomId, role: "receiver" });
-      // Receiver initiates the peer connection in this implementation?
-      // Actually usually Initiator (Sender) starts.
-      // Let's checking 'peer-joined' event.
     });
 
     this.socket.on("peer-joined", (peerId: string) => {
-      console.log(`Peer ${peerId} joined. Starting WebRTC...`);
+      console.log(
+        `[Socket] Peer ${peerId} joined. Starting WebRTC as INITIATOR...`,
+      );
       // If we are sender, and peer joins, we start the offer.
       this.initializePeer(true);
     });
 
     this.socket.on("signal", (data: SignalData) => {
+      console.log(`[Socket] Received signal: ${data.type || "candidate"}`);
       if (this.peer) {
         this.peer.signal(data);
       } else {
         // If we are receiver, we might receive an offer before we created the peer.
-        // But usually receiver creates peer non-initiator immediately upon join?
-        // Let's handle it: if no peer, create one as non-initiator
         if (!this.isInitiator) {
+          console.log("[Socket] No peer exists, creating as RECEIVER...");
           this.initializePeer(false);
           this.peer!.signal(data);
+        } else {
+          console.warn(
+            "[Socket] Received signal but no peer and we are initiator - ignoring",
+          );
         }
       }
     });
 
     this.socket.on("error", (err: string) => {
+      console.error("[Socket] Error:", err);
       this.emit("error", err);
     });
   }
@@ -102,6 +116,10 @@ export class P2PClient {
   }
 
   private initializePeer(initiator: boolean) {
+    console.log(
+      `[P2P] Initializing peer as ${initiator ? "INITIATOR" : "RECEIVER"}`,
+    );
+
     this.peer = new SimplePeer({
       initiator,
       trickle: true, // Enable trickle ICE for faster/robust connection
@@ -142,11 +160,12 @@ export class P2PClient {
     });
 
     this.peer.on("signal", (data) => {
+      console.log(`[P2P] Sending signal: ${data.type || "candidate"}`);
       this.socket.emit("signal", { roomId: this.roomId, data });
     });
 
     this.peer.on("connect", () => {
-      console.log("P2P Connection Established!");
+      console.log("[P2P] ✓ P2P Connection Established!");
       this.emit("connected", { p2p: true });
     });
 
@@ -155,13 +174,35 @@ export class P2PClient {
     });
 
     this.peer.on("error", (err) => {
-      console.error("Peer error:", err);
+      console.error("[P2P] Peer error:", err);
       this.emit("error", err);
     });
 
     this.peer.on("close", () => {
+      console.log("[P2P] Peer connection closed");
       this.emit("close");
     });
+
+    // Debug: Log ICE connection state changes via the underlying RTCPeerConnection
+    const pc = (this.peer as any)._pc as RTCPeerConnection | undefined;
+    if (pc) {
+      pc.oniceconnectionstatechange = () => {
+        console.log(`[P2P] ICE connection state: ${pc.iceConnectionState}`);
+      };
+      pc.onicegatheringstatechange = () => {
+        console.log(`[P2P] ICE gathering state: ${pc.iceGatheringState}`);
+      };
+      pc.onconnectionstatechange = () => {
+        console.log(`[P2P] Connection state: ${pc.connectionState}`);
+      };
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log(
+            `[P2P] ICE candidate: ${event.candidate.type} - ${event.candidate.address || "relay"}`,
+          );
+        }
+      };
+    }
   }
 
   send(data: any) {
