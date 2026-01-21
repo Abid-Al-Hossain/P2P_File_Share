@@ -7,6 +7,15 @@ const { v4: uuidv4 } = require("uuid");
 const app = express();
 app.use(cors());
 
+// Health check endpoint
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "P2P Signaling Server is running" });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", rooms: rooms.size });
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
