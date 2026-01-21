@@ -100,8 +100,26 @@ export class P2PClient {
       trickle: true, // Enable trickle ICE for faster/robust connection
       config: {
         iceServers: [
+          // STUN servers - for discovering public IP
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:global.stun.twilio.com:3478" },
+          // TURN servers - for relaying when direct P2P fails (e.g., symmetric NAT)
+          // Open Relay Project - free 20GB/month (https://www.metered.ca/tools/openrelay/)
+          {
+            urls: "turn:openrelay.metered.ca:80",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443?transport=tcp",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
         ],
       },
     });
